@@ -18,10 +18,18 @@ from feature_extractor import extract_from_frame, get_hand_landmarks_for_drawing
 # ──────────────────────────────────────────────
 
 print("Modeller yükleniyor...")
-model_tek = joblib.load(MODEL_TEK_EL)
-model_iki = joblib.load(MODEL_IKI_EL)
-le_tek    = joblib.load(LE_TEK_EL)
-le_iki    = joblib.load(LE_IKI_EL)
+try:
+    model_tek = joblib.load(MODEL_TEK_EL)
+    print("model_tek OK")
+    model_iki = joblib.load(MODEL_IKI_EL)
+    print("model_iki OK")
+    le_tek = joblib.load(LE_TEK_EL)
+    print("le_tek OK")
+    le_iki = joblib.load(LE_IKI_EL)
+    print("le_iki OK")
+except Exception as e:
+    print(f"HATA: {e}")
+    exit()
 print("Modeller hazır!\n")
 
 mp_hands   = mp.solutions.hands
@@ -130,7 +138,7 @@ if not cap.isOpened():
     exit()
 
 print("Kamera açıldı.")
-print("Çıkmak için 'q' | Bufferı sıfırlamak için 'r'\n")
+print("Çıkmak için 'q' | Buffer sıfırlamak için 'r'\n")
 
 guncel_harf  = "?"
 guncel_guven = 0.0

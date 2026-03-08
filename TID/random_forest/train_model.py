@@ -100,15 +100,14 @@ def egit_model(X_train, y_train, X_test, y_test, model_path, le_path, isim):
     print(f"Sınıflar: {list(le.classes_)}")
 
     # Random Forest
-    # n_estimators=200 → 200 karar ağacı, daha fazlası daha iyi ama yavaş
-    # class_weight='balanced' → harf başına foto sayısı farklıysa dengeleme yapar
+    
     model = RandomForestClassifier(
         n_estimators=200,
         max_depth=None,
         min_samples_split=2,
         class_weight='balanced',
         random_state=42,
-        n_jobs=-1          # Tüm CPU çekirdeklerini kullan
+        n_jobs=-1         
     )
 
     print("Eğitim başlıyor...")
