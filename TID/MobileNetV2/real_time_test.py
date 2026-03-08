@@ -20,8 +20,8 @@ from collections import deque
 
 # ─────────────────────────────────────────────
 IMG_SIZE         = 224
-MODEL_PATH       = "results/MobileNetV2_TID_final.keras"
-CLASS_NAMES_PATH = "results/class_names.json"
+MODEL_PATH       = "MobileNetV2/results/MobileNetV2_TID_final.keras"
+CLASS_NAMES_PATH = "MobileNetV2/results/class_names.json"
 SMOOTH_WINDOW    = 12
 CONF_THRESHOLD   = 0.55
 ROI_RATIO        = 0.45
