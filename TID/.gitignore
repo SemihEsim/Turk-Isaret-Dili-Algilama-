@@ -1,0 +1,58 @@
+# ==========================================
+# Veri Setleri (Dataset) - Çok büyük dosyalar
+# ==========================================
+archive/
+keypoints/train/
+keypoints/test/
+keypoints/val/
+
+# ==========================================
+# Model Dosyaları - GitHub 100MB limitini aşar
+# ==========================================
+*.h5
+*.keras
+*.pkl
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.pb
+
+# SavedModel klasörleri
+**/variables/
+**/assets/
+**/saved_model.pb
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Sanal ortam
+venv/
+env/
+.venv/
+.env/
+
+# ==========================================
+# IDE / Editör
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# İşletim Sistemi
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,11 @@
+flask
+flask-socketio
+flask-cors
+tensorflow
+numpy
+opencv-python-headless
+mediapipe
+joblib
+scikit-learn
+eventlet
+torch

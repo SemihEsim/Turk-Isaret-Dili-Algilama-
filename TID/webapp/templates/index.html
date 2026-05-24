@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Türk İşaret Dili anlık algılama ve çeviri web uygulaması. Zoom ve Meet toplantılarında işaret dili çevirisi.">
+  <title>TID — Türk İşaret Dili Algılama</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- ═══════ HEADER ═══════ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="header-logo">🤟</div>
+        <div>
+          <div class="header-title">Türk İşaret Dili Algılama</div>
+          <div class="header-subtitle">Gerçek zamanlı TID çevirisi</div>
+        </div>
+      </div>
+      <div class="header-status">
+        <span class="fps-badge" id="fpsDisplay">0 FPS</span>
+        <div class="connection-badge disconnected" id="connectionBadge">
+          <span class="connection-dot"></span>
+          <span id="connectionText">Bağlanıyor...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════ ANA İÇERİK ═══════ -->
+  <main class="main-container">
+
+    <!-- ── Sol: Video ── -->
+    <section class="video-section">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📹</span>
+            Video Kaynağı
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="cameraSelect" title="Kamera seç">
+              <option value="">Kamera seçin...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="video-container" id="videoContainer">
+          <video id="videoElement" autoplay playsinline muted></video>
+          <canvas id="overlayCanvas"></canvas>
+          <div class="video-placeholder" id="videoPlaceholder">
+            <div class="video-placeholder-icon">📷</div>
+            <p>Kamera veya ekran paylaşımı başlatın</p>
+          </div>
+        </div>
+
+        <div class="video-controls">
+          <button class="btn btn-primary" id="btnCamera" title="Kamerayı aç">
+            <span class="btn-icon">📷</span> Kamera Aç
+          </button>
+          <button class="btn btn-success" id="btnScreen" title="Ekran paylaş (Zoom/Meet)">
+            <span class="btn-icon">🖥️</span> Ekran Paylaş
+          </button>
+          <button class="btn btn-danger" id="btnStop" title="Durdur" style="display:none;">
+            <span class="btn-icon">⏹</span> Durdur
+          </button>
+          <div style="flex:1;"></div>
+          <button class="btn" id="btnClearHistory" title="Geçmişi temizle">
+            <span class="btn-icon">🗑️</span> Temizle
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Sağ Panel ── -->
+    <aside class="right-panel">
+
+      <!-- Tahmin -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">✨</span>
+            Anlık Tahmin
+          </div>
+          <span id="modelBadge" style="font-size:0.7rem;color:var(--text-muted);">—</span>
+        </div>
+        <div class="prediction-display">
+          <div class="prediction-letter" id="predictionLetter">?</div>
+          <div class="prediction-sublabel" id="predictionSublabel"></div>
+          <div class="prediction-label" id="predictionLabel">Bekleniyor...</div>
+          <div class="confidence-bar-wrapper">
+            <div class="confidence-bar-bg">
+              <div class="confidence-bar-fill" id="confidenceBar" style="width:0%"></div>
+            </div>
+            <div class="confidence-text">
+              <span>Güven Skoru</span>
+              <span class="confidence-value" id="confidenceValue">0%</span>
+            </div>
+          </div>
+          <div class="tcn-progress-wrapper" id="tcnProgress">
+            <div class="tcn-progress-label">TCN Tampon İlerlemesi</div>
+            <div class="tcn-progress-bar">
+              <div class="tcn-progress-fill" id="tcnProgressFill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="loading-spinner" id="modelLoading">
+            <div class="spinner"></div>
+            <span class="loading-text">Model yükleniyor...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 5 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📊</span>
+            Top 5 Tahmin
+          </div>
+        </div>
+        <div class="card-body">
+          <ul class="top5-list" id="top5List">
+            <li class="top5-item" data-index="0">
+              <span class="top5-rank rank-1">1</span>
+              <span class="top5-label">—</span>
+              <div class="top5-bar"><div class="top5-bar-fill" style="width:0%"></div></div>
+              <span class="top5-conf">0%</span>
+            </li>
+            <li class="top5-item" data-index="1">
+              <span class="top5-rank">2</span>
+              <span class="top5-label">—</span>
+              <div class="top5-bar"><div class="top5-bar-fill" style="width:0%"></div></div>
+              <span class="top5-conf">0%</span>
+            </li>
+            <li class="top5-item" data-index="2">
+              <span class="top5-rank">3</span>
+              <span class="top5-label">—</span>
+              <div class="top5-bar"><div class="top5-bar-fill" style="width:0%"></div></div>
+              <span class="top5-conf">0%</span>
+            </li>
+            <li class="top5-item" data-index="3">
+              <span class="top5-rank">4</span>
+              <span class="top5-label">—</span>
+              <div class="top5-bar"><div class="top5-bar-fill" style="width:0%"></div></div>
+              <span class="top5-conf">0%</span>
+            </li>
+            <li class="top5-item" data-index="4">
+              <span class="top5-rank">5</span>
+              <span class="top5-label">—</span>
+              <div class="top5-bar"><div class="top5-bar-fill" style="width:0%"></div></div>
+              <span class="top5-conf">0%</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Model Seçimi -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">🧠</span>
+            Model Seçimi
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="model-grid" id="modelGrid">
+            <!-- JS ile doldurulacak -->
+          </div>
+          <div style="margin-top:14px;">
+            <div class="setting-row">
+              <span class="setting-label">Güven Eşiği</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="range" id="confThreshold" min="0.1" max="0.95" step="0.05" value="0.5">
+                <span class="setting-value" id="confThresholdValue">%50</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Geçmiş -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📝</span>
+            Algılama Geçmişi
+          </div>
+          <span style="font-size:0.7rem;color:var(--text-muted);" id="historyCount">0</span>
+        </div>
+        <div class="card-body">
+          <div class="history-display" id="historyDisplay">
+            <div class="history-empty">Henüz algılama yapılmadı</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- İstatistik -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="card-title-icon">📈</span>
+            İstatistikler
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="statPredictions">0</div>
+              <div class="stat-label">Toplam Tahmin</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statLetters">0</div>
+              <div class="stat-label">Algılanan Harf</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statAvgConf">0%</div>
+              <div class="stat-label">Ort. Güven</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statUptime">0s</div>
+              <div class="stat-label">Çalışma Süresi</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ═══════ SCRIPTS ═══════ -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.min.js" crossorigin="anonymous"></script>
+  <script>
+    // MediaPipe yükleme kontrolü
+    window.addEventListener('load', function() {
+      if (typeof Hands === 'undefined') {
+        console.error('[MediaPipe] Hands kütüphanesi yüklenemedi!');
+        document.title = 'HATA: MediaPipe yüklenemedi';
+      } else {
+        console.log('[MediaPipe] Hands kütüphanesi yüklendi ✓');
+      }
+      if (typeof drawConnectors === 'undefined') {
+        console.error('[MediaPipe] drawing_utils yüklenemedi!');
+      } else {
+        console.log('[MediaPipe] drawing_utils yüklendi ✓');
+      }
+      if (typeof HAND_CONNECTIONS === 'undefined') {
+        console.error('[MediaPipe] HAND_CONNECTIONS bulunamadı!');
+      } else {
+        console.log('[MediaPipe] HAND_CONNECTIONS yüklendi ✓');
+      }
+    });
+  </script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
