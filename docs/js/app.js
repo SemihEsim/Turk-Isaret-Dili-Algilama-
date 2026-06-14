@@ -185,6 +185,14 @@ function initHolistic() {
     minTrackingConfidence: 0.6,
   });
 
+  state.holistic.onResults((results) => {
+    state.results = results;
+    drawLandmarks(results);
+  });
+
+  console.log("[MediaPipe] Holistic başlatıldı");
+}
+
 function drawHandStyle(ctx, landmarks) {
   const w = ctx.canvas.width;
   const h = ctx.canvas.height;
