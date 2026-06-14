@@ -321,7 +321,9 @@ a { color: inherit; text-decoration: none; }
 }
 .video-wrapper video, .video-wrapper canvas {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
-  transform: scaleX(-1); /* Aynalama efekti */
+}
+.mirrored {
+  transform: scaleX(-1); /* Sadece kamera için aynalama */
 }
 #overlayCanvas { z-index: 2; pointer-events: none; }
 .video-placeholder {

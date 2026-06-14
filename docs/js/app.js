@@ -33,6 +33,10 @@ const state = {
   history: [],
   // Holistic results
   results: null,
+  // New features
+  soundEnabled: false,
+  isScreen: false,
+  rfBuffer: [],
 };
 
 const $ = (s) => document.querySelector(s);
@@ -57,6 +61,9 @@ const dom = {
   recordingFill: $("#recordingFill"),
   recordingTime: $("#recordingTime"),
   videoWrapper: $("#videoWrapper"),
+  btnScreen: $("#btnScreen"),
+  btnSound: $("#btnSound"),
+  soundIcon: $("#soundIcon"),
 };
 
 
@@ -125,7 +132,7 @@ function initHolistic() {
   });
 
   state.holistic.setOptions({
-    selfieMode: true, // Lokaldeki cv2.flip(frame, 1) ile ayni etkiyi yaratir!
+    selfieMode: !state.isScreen, // Ekran paylaşımında aynalamayı kapat
     modelComplexity: 1,
     smoothLandmarks: true,
     minDetectionConfidence: 0.5,
@@ -214,25 +221,52 @@ function extractCNN1DKeypoints(results) {
 }
 
 
-// ═══════ CAMERA ═══════
+// ═══════ CAMERA & SCREEN SHARE ═══════
 async function startCamera() {
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
     });
-    dom.video.srcObject = state.stream;
-    await dom.video.play();
-    state.streaming = true;
-    dom.placeholder.style.display = "none";
-    dom.btnCamera.style.display = "none";
-    dom.btnStop.style.display = "inline-flex";
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-    initHolistic();
-    frameLoop();
+    state.isScreen = false;
+    dom.video.classList.add("mirrored");
+    dom.canvas.classList.add("mirrored");
+    await setupStream();
   } catch (e) {
     alert("Kamera hatası: " + e.message);
   }
+}
+
+async function startScreenShare() {
+  try {
+    state.stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { frameRate: { ideal: 30 } },
+    });
+    state.isScreen = true;
+    dom.video.classList.remove("mirrored");
+    dom.canvas.classList.remove("mirrored");
+    await setupStream();
+  } catch (e) {
+    alert("Ekran paylaşımı hatası: " + e.message);
+  }
+}
+
+async function setupStream() {
+  dom.video.srcObject = state.stream;
+  await dom.video.play();
+  state.streaming = true;
+  dom.placeholder.style.display = "none";
+  dom.btnCamera.style.display = "none";
+  dom.btnScreen.style.display = "none";
+  dom.btnStop.style.display = "inline-flex";
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+  
+  if (state.holistic) {
+    state.holistic.setOptions({ selfieMode: !state.isScreen });
+  } else {
+    initHolistic();
+  }
+  frameLoop();
 }
 
 function stopCamera() {
@@ -244,11 +278,13 @@ function stopCamera() {
   dom.video.srcObject = null;
   dom.placeholder.style.display = "";
   dom.btnCamera.style.display = "inline-flex";
+  dom.btnScreen.style.display = "inline-flex";
   dom.btnStop.style.display = "none";
   if (state.animationId) cancelAnimationFrame(state.animationId);
   window.removeEventListener("resize", resizeCanvas);
   state.cnnRecording = false;
   state.cnnSequence = [];
+  state.rfBuffer = [];
   dom.recordingBar.classList.remove("visible");
 }
 
@@ -296,7 +332,30 @@ async function handleRF(now) {
   if (hand_count === 0) return;
 
   const pred = await predictRF(landmarks, hand_count);
-  if (pred) showPrediction(pred);
+  if (pred) {
+    // Buffer logic
+    state.rfBuffer.push(pred);
+    if (state.rfBuffer.length > 7) state.rfBuffer.shift();
+
+    const counts = {};
+    for (const p of state.rfBuffer) counts[p.label] = (counts[p.label] || 0) + 1;
+
+    let maxLabel = "?";
+    let maxCount = 0;
+    for (const [lbl, count] of Object.entries(counts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        maxLabel = lbl;
+      }
+    }
+
+    if (maxCount >= 4 && maxLabel !== "?") {
+      const stablePred = state.rfBuffer.find((p) => p.label === maxLabel);
+      showPrediction(stablePred, true);
+    } else {
+      showPrediction(pred, false);
+    }
+  }
 }
 
 
@@ -337,7 +396,7 @@ async function finishCNN1DRecording() {
   dom.predLabel.textContent = "Analiz ediliyor...";
 
   const pred = await predictCNN1D(state.cnnSequence);
-  if (pred) showPrediction(pred);
+  if (pred) showPrediction(pred, true); // CNN is always "stable" since it's one-shot
 
   state.cnnSequence = [];
 
@@ -346,14 +405,14 @@ async function finishCNN1DRecording() {
 }
 
 
-// ═══════ UI UPDATES ═══════
-function showPrediction(pred) {
+// ═══════ UI & AUDIO UPDATES ═══════
+function showPrediction(pred, isStable) {
   const label = pred.label;
   const conf = pred.confidence;
   const pct = Math.round(conf * 100);
 
   dom.predLetter.textContent = label.toUpperCase();
-  dom.predLabel.textContent = conf > 0.5 ? "Algılandı" : "Düşük güven";
+  dom.predLabel.textContent = isStable && conf > 0.5 ? "Algılandı" : (conf > 0.5 ? "Sabit tut..." : "Düşük güven");
   dom.confFill.style.width = pct + "%";
   dom.confPct.textContent = "%" + pct;
 
@@ -370,13 +429,21 @@ function showPrediction(pred) {
     }).join("");
   }
 
-  // History
-  if (conf > 0.5 && label !== state.prevLabel) {
+  // History & Sound (Only update if stable and changed)
+  if (isStable && conf > 0.5 && label !== state.prevLabel) {
     state.prevLabel = label;
     state.history.push(label);
     if (state.history.length > 40) state.history.shift();
     renderHistory();
+    speak(label);
   }
+}
+
+function speak(text) {
+  if (!state.soundEnabled || !window.speechSynthesis) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "tr-TR";
+  window.speechSynthesis.speak(utterance);
 }
 
 function renderHistory() {
@@ -399,6 +466,7 @@ function selectModel(model) {
   state.prevLabel = "";
   state.cnnRecording = false;
   state.cnnSequence = [];
+  state.rfBuffer = [];
   dom.recordingBar.classList.remove("visible");
 
   dom.tabRF.classList.toggle("active", model === "rf");
@@ -415,7 +483,15 @@ function selectModel(model) {
 // ═══════ EVENTS ═══════
 function init() {
   dom.btnCamera.addEventListener("click", startCamera);
+  dom.btnScreen.addEventListener("click", startScreenShare);
   dom.btnStop.addEventListener("click", stopCamera);
+  
+  dom.btnSound.addEventListener("click", () => {
+    state.soundEnabled = !state.soundEnabled;
+    dom.soundIcon.textContent = state.soundEnabled ? "🔊" : "🔇";
+    dom.btnSound.title = state.soundEnabled ? "Sesi Kapat" : "Sesli Çıktı";
+  });
+
   dom.btnClear.addEventListener("click", () => {
     state.history = [];
     state.prevLabel = "";

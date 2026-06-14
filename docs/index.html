@@ -183,12 +183,18 @@
               <span id="recordingTime">0.0/3.0s</span>
             </div>
           </div>
-          <div class="video-controls">
+          <div class="video-controls" style="display: flex; gap: 10px; width: 100%;">
             <button class="btn btn-primary" id="btnCamera">
               <span>📷</span> Kamerayı Aç
             </button>
+            <button class="btn btn-glass" id="btnScreen">
+              <span>💻</span> Ekranı Paylaş
+            </button>
             <button class="btn btn-danger" id="btnStop" style="display:none;">
               <span>⏹</span> Durdur
+            </button>
+            <button class="btn btn-glass" id="btnSound" style="margin-left: auto; padding: 0.5rem 1rem;" title="Sesli Çıktı">
+              <span id="soundIcon">🔇</span>
             </button>
           </div>
         </div>
