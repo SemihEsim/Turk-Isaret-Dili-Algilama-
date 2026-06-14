@@ -125,6 +125,7 @@ function initHolistic() {
   });
 
   state.holistic.setOptions({
+    selfieMode: true, // Lokaldeki cv2.flip(frame, 1) ile ayni etkiyi yaratir!
     modelComplexity: 1,
     smoothLandmarks: true,
     minDetectionConfidence: 0.5,
@@ -164,7 +165,8 @@ function drawLandmarks(results) {
 
 // ═══════ LANDMARK EXTRACTION ═══════
 function extractRFLandmarks(results) {
-  const hands = [];
+  let leftHand = new Array(63).fill(0);
+  let rightHand = new Array(63).fill(0);
   let handCount = 0;
 
   function normalizeHand(lm) {
@@ -176,26 +178,26 @@ function extractRFLandmarks(results) {
     return feat;
   }
 
-  if (results.rightHandLandmarks) {
-    hands.push(...normalizeHand(results.rightHandLandmarks));
-    handCount++;
-  } else {
-    hands.push(...new Array(63).fill(0));
-  }
-
   if (results.leftHandLandmarks) {
-    if (handCount === 0) {
-      // Sol el varsa sağ elin yerine koy
-      hands.splice(0, 63, ...normalizeHand(results.leftHandLandmarks));
-    } else {
-      hands.push(...normalizeHand(results.leftHandLandmarks));
-    }
+    leftHand = normalizeHand(results.leftHandLandmarks);
     handCount++;
-  } else if (handCount === 1) {
-    hands.push(...new Array(63).fill(0));
+  }
+  
+  if (results.rightHandLandmarks) {
+    rightHand = normalizeHand(results.rightHandLandmarks);
+    handCount++;
   }
 
-  return { landmarks: hands.slice(0, handCount === 2 ? 126 : 63), hand_count: handCount };
+  if (handCount === 0) return { landmarks: [], hand_count: 0 };
+
+  if (handCount === 1) {
+    // Python'da 1 el olduğunda sadece o eli 63 feature olarak döndürür
+    const activeHand = results.leftHandLandmarks ? leftHand : rightHand;
+    return { landmarks: activeHand, hand_count: 1 };
+  }
+
+  // 2 el varsa önce sol el sonra sağ el (Python: sol_el + sag_el)
+  return { landmarks: [...leftHand, ...rightHand], hand_count: 2 };
 }
 
 function extractCNN1DKeypoints(results) {
