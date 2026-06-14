@@ -321,7 +321,8 @@ async function startCamera() {
     });
     state.isScreen = false;
     dom.video.classList.add("mirrored");
-    dom.canvas.classList.add("mirrored");
+    // Canvas CSS ile aynalanmaz, çünkü MediaPipe selfieMode zaten koordinatları aynalıyor.
+    dom.canvas.classList.remove("mirrored");
     await setupStream();
   } catch (e) {
     alert("Kamera hatası: " + e.message);
