@@ -144,8 +144,8 @@ function initHolistic() {
     selfieMode: !state.isScreen, // Ekran paylaşımında aynalamayı kapat
     modelComplexity: 1,
     smoothLandmarks: true,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6,
   });
 
   state.holistic.onResults((results) => {
@@ -335,40 +335,52 @@ function frameLoop() {
 
 
 // ═══════ RF HANDLER ═══════
-async function handleRF(now) {
+function handleRF(now) {
   if (now - state.lastSendTime < state.sendInterval) return;
   const results = state.results;
-  if (!results.leftHandLandmarks && !results.rightHandLandmarks) return;
+  const hasHand = results.leftHandLandmarks || results.rightHandLandmarks;
+  
+  if (!hasHand) {
+    dom.predLetter.textContent = "?";
+    dom.predLabel.textContent = "El Bekleniyor...";
+    dom.confFill.style.width = "0%";
+    dom.confPct.textContent = "%0";
+    state.rfBuffer = []; // El kaybolunca buffer'ı sıfırla
+    return;
+  }
 
   state.lastSendTime = now;
   const { landmarks, hand_count } = extractRFLandmarks(results);
   if (hand_count === 0) return;
 
-  const pred = await predictRF(landmarks, hand_count);
-  if (pred) {
-    // Buffer logic
-    state.rfBuffer.push(pred);
-    if (state.rfBuffer.length > 7) state.rfBuffer.shift();
+  // Use an async IIFE to not block the synchronous frame loop execution path
+  (async () => {
+    const pred = await predictRF(landmarks, hand_count);
+    if (pred) {
+      // Buffer logic
+      state.rfBuffer.push(pred);
+      if (state.rfBuffer.length > 7) state.rfBuffer.shift();
 
-    const counts = {};
-    for (const p of state.rfBuffer) counts[p.label] = (counts[p.label] || 0) + 1;
+      const counts = {};
+      for (const p of state.rfBuffer) counts[p.label] = (counts[p.label] || 0) + 1;
 
-    let maxLabel = "?";
-    let maxCount = 0;
-    for (const [lbl, count] of Object.entries(counts)) {
-      if (count > maxCount) {
-        maxCount = count;
-        maxLabel = lbl;
+      let maxLabel = "?";
+      let maxCount = 0;
+      for (const [lbl, count] of Object.entries(counts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxLabel = lbl;
+        }
+      }
+
+      if (maxCount >= 4 && maxLabel !== "?") {
+        const stablePred = state.rfBuffer.find((p) => p.label === maxLabel);
+        showPrediction(stablePred, true);
+      } else {
+        showPrediction(pred, false);
       }
     }
-
-    if (maxCount >= 4 && maxLabel !== "?") {
-      const stablePred = state.rfBuffer.find((p) => p.label === maxLabel);
-      showPrediction(stablePred, true);
-    } else {
-      showPrediction(pred, false);
-    }
-  }
+  })();
 }
 
 
