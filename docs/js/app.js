@@ -163,18 +163,18 @@ function drawLandmarks(results) {
 
   const hasDrawing = typeof drawConnectors === "function" && typeof drawLandmarks === "function";
 
-  // Hands
+  // Hands (Daha belirgin renkler ve kalın çizgiler)
   if (results.leftHandLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.leftHandLandmarks, HAND_CONNECTIONS, { color: "rgba(99,102,241,0.7)", lineWidth: 2 });
-    window.drawLandmarks(ctx, results.leftHandLandmarks, { color: "rgba(139,92,246,0.9)", lineWidth: 1, radius: 3 });
+    drawConnectors(ctx, results.leftHandLandmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 4 }); // Parlak Yeşil
+    window.drawLandmarks(ctx, results.leftHandLandmarks, { color: "#FF0000", lineWidth: 2, radius: 4 }); // Kırmızı Noktalar
   }
   if (results.rightHandLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.rightHandLandmarks, HAND_CONNECTIONS, { color: "rgba(6,182,212,0.7)", lineWidth: 2 });
-    window.drawLandmarks(ctx, results.rightHandLandmarks, { color: "rgba(16,185,129,0.9)", lineWidth: 1, radius: 3 });
+    drawConnectors(ctx, results.rightHandLandmarks, HAND_CONNECTIONS, { color: "#00FFFF", lineWidth: 4 }); // Parlak Camgöbeği (Cyan)
+    window.drawLandmarks(ctx, results.rightHandLandmarks, { color: "#FF00FF", lineWidth: 2, radius: 4 }); // Magenta Noktalar
   }
-  // Pose (minimal)
+  // Pose (Daha belirgin vücut çizgileri)
   if (results.poseLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "rgba(255,255,255,0.15)", lineWidth: 1 });
+    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "rgba(255, 255, 255, 0.5)", lineWidth: 2 });
   }
 }
 
