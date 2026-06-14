@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Türk İşaret Dili (TID) gerçek zamanlı algılama ve çeviri. Random Forest ile harf, 1D CNN ile kelime tanıma.">
+  <title>TID — Türk İşaret Dili Algılama</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ═══════ NAV ═══════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <span class="nav-logo">🤟</span>
+        <span class="nav-title">TID Algılama</span>
+      </a>
+      <div class="nav-links">
+        <a href="#models">Modeller</a>
+        <a href="#demo">Canlı Demo</a>
+        <a href="#how">Nasıl Çalışır</a>
+        <a href="#setup">Kurulum</a>
+        <a href="https://github.com/SemihEsworworkem/Turk-Isaret-Dili-Algilama-" target="_blank" class="nav-github">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════ HERO ═══════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">🤟 Yapay Zeka Destekli</div>
+      <h1 class="hero-title">
+        Türk İşaret Dili<br>
+        <span class="gradient-text">Gerçek Zamanlı Algılama</span>
+      </h1>
+      <p class="hero-desc">
+        Kameranız üzerinden işaret dilini anında tanıyan yapay zeka sistemi.
+        Random Forest ile <strong>23 harf</strong>, 1D CNN ile <strong>70 kelime</strong> algılama.
+      </p>
+      <div class="hero-buttons">
+        <a href="#demo" class="btn btn-primary btn-lg">
+          <span>🎯</span> Demoyu Dene
+        </a>
+        <a href="#models" class="btn btn-glass btn-lg">
+          <span>🧠</span> Modelleri İncele
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value">2</div>
+          <div class="hero-stat-label">AI Model</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">23</div>
+          <div class="hero-stat-label">Harf</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">70</div>
+          <div class="hero-stat-label">Kelime</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">%95+</div>
+          <div class="hero-stat-label">Doğruluk</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ MODELLER ═══════ -->
+  <section class="section" id="models">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-badge">🧠 Yapay Zeka Modelleri</span>
+        <h2 class="section-title">İki Güçlü Model</h2>
+        <p class="section-desc">Her biri farklı bir görevi üstlenen iki AI modeli</p>
+      </div>
+      <div class="model-cards">
+        <!-- Random Forest -->
+        <div class="model-card">
+          <div class="model-card-glow glow-emerald"></div>
+          <div class="model-card-icon">🌲</div>
+          <h3 class="model-card-title">Random Forest</h3>
+          <span class="model-card-badge badge-emerald">Harf Tanıma</span>
+          <p class="model-card-desc">
+            MediaPipe el noktalarını kullanarak Türk İşaret Dili alfabesindeki harfleri tanır.
+            Tek el ve çift el desteği ile yüksek doğruluklu tahmin.
+          </p>
+          <div class="model-card-specs">
+            <div class="spec"><span class="spec-label">Doğruluk</span><span class="spec-value text-emerald">%95</span></div>
+            <div class="spec"><span class="spec-label">Sınıf Sayısı</span><span class="spec-value">23 Harf</span></div>
+            <div class="spec"><span class="spec-label">Giriş</span><span class="spec-value">El Noktaları</span></div>
+            <div class="spec"><span class="spec-label">Hız</span><span class="spec-value">Anlık</span></div>
+          </div>
+          <div class="model-card-letters">
+            A B C D E F G H I J K L M N O P R S T U V Y Z
+          </div>
+        </div>
+        <!-- 1D CNN -->
+        <div class="model-card">
+          <div class="model-card-glow glow-violet"></div>
+          <div class="model-card-icon">🧬</div>
+          <h3 class="model-card-title">1D CNN</h3>
+          <span class="model-card-badge badge-violet">Kelime Tanıma</span>
+          <p class="model-card-desc">
+            60 frame'lik hareket sekansını analiz ederek 70 farklı Türkçe işaret dili kelimesini tanır.
+            El ve vücut noktalarını birlikte kullanır.
+          </p>
+          <div class="model-card-specs">
+            <div class="spec"><span class="spec-label">Kelime</span><span class="spec-value text-violet">70 Kelime</span></div>
+            <div class="spec"><span class="spec-label">Giriş</span><span class="spec-value">60×225</span></div>
+            <div class="spec"><span class="spec-label">Kayıt</span><span class="spec-value">~3 Saniye</span></div>
+            <div class="spec"><span class="spec-label">Framework</span><span class="spec-value">TensorFlow</span></div>
+          </div>
+          <div class="model-card-words">
+            anne • baba • evet • hayır • merhaba • teşekkür • okul • doktor • yardım • sevmek ...
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ CANLI DEMO ═══════ -->
+  <section class="section section-dark" id="demo">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-badge">🎯 Canlı Demo</span>
+        <h2 class="section-title">Şimdi Deneyin</h2>
+        <p class="section-desc">Kameranızı açın ve işaret dili yapın</p>
+      </div>
+
+      <!-- API Durum -->
+      <div class="api-status" id="apiStatus">
+        <span class="api-dot" id="apiDot"></span>
+        <span id="apiText">API'ye bağlanılıyor...</span>
+      </div>
+
+      <!-- Model Seçimi -->
+      <div class="demo-model-tabs">
+        <button class="demo-tab active" data-model="rf" id="tabRF">
+          <span class="demo-tab-icon">🌲</span>
+          <span class="demo-tab-label">Random Forest</span>
+          <span class="demo-tab-sub">Harf Tanıma</span>
+        </button>
+        <button class="demo-tab" data-model="cnn1d" id="tabCNN">
+          <span class="demo-tab-icon">🧬</span>
+          <span class="demo-tab-label">1D CNN</span>
+          <span class="demo-tab-sub">Kelime Tanıma</span>
+        </button>
+      </div>
+
+      <!-- Demo Grid -->
+      <div class="demo-grid">
+        <!-- Video -->
+        <div class="demo-video-card">
+          <div class="video-wrapper" id="videoWrapper">
+            <video id="videoElement" autoplay playsinline muted></video>
+            <canvas id="overlayCanvas"></canvas>
+            <div class="video-placeholder" id="videoPlaceholder">
+              <div class="video-placeholder-icon">📷</div>
+              <p>Kameranızı açarak demo'yu başlatın</p>
+            </div>
+            <!-- CNN Recording bar -->
+            <div class="recording-bar" id="recordingBar">
+              <div class="recording-dot"></div>
+              <span>KAYIT</span>
+              <div class="recording-progress">
+                <div class="recording-progress-fill" id="recordingFill"></div>
+              </div>
+              <span id="recordingTime">0.0/3.0s</span>
+            </div>
+          </div>
+          <div class="video-controls">
+            <button class="btn btn-primary" id="btnCamera">
+              <span>📷</span> Kamerayı Aç
+            </button>
+            <button class="btn btn-danger" id="btnStop" style="display:none;">
+              <span>⏹</span> Durdur
+            </button>
+          </div>
+        </div>
+
+        <!-- Sonuç Panel -->
+        <div class="demo-result-card">
+          <!-- Tahmin -->
+          <div class="prediction-box">
+            <div class="prediction-letter" id="predLetter">?</div>
+            <div class="prediction-label" id="predLabel">Bekleniyor...</div>
+            <div class="confidence-wrapper">
+              <div class="confidence-track">
+                <div class="confidence-fill" id="confFill" style="width:0%"></div>
+              </div>
+              <div class="confidence-info">
+                <span>Güven Skoru</span>
+                <span class="confidence-pct" id="confPct">%0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 5 -->
+          <div class="top5-box">
+            <div class="top5-title">Top 5 Tahmin</div>
+            <div class="top5-list" id="top5List"></div>
+          </div>
+
+          <!-- Geçmiş -->
+          <div class="history-box">
+            <div class="history-title">Algılama Geçmişi</div>
+            <div class="history-items" id="historyItems">
+              <span class="history-empty">Henüz algılama yok</span>
+            </div>
+            <button class="btn btn-sm" id="btnClear" style="margin-top:8px;">🗑️ Temizle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ NASIL ÇALIŞIR ═══════ -->
+  <section class="section" id="how">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-badge">⚡ Mimari</span>
+        <h2 class="section-title">Nasıl Çalışır?</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon">📷</div>
+          <h3>Kamera</h3>
+          <p>Tarayıcı kameranızdan görüntü alınır</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon">🖐️</div>
+          <h3>MediaPipe</h3>
+          <p>El ve vücut noktaları tarayıcıda çıkarılır</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon">🧠</div>
+          <h3>AI Model</h3>
+          <p>Noktalar API'ye gönderilir, model tahmin yapar</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-icon">✨</div>
+          <h3>Sonuç</h3>
+          <p>Algılanan harf veya kelime ekranda gösterilir</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ KURULUM ═══════ -->
+  <section class="section section-dark" id="setup">
+    <div class="section-inner">
+      <div class="section-header">
+        <span class="section-badge">🛠️ Yerel Kurulum</span>
+        <h2 class="section-title">Projeyi Çalıştırın</h2>
+        <p class="section-desc">Tüm modelleri kendi bilgisayarınızda deneyebilirsiniz</p>
+      </div>
+      <div class="setup-card">
+        <pre class="code-block"><code><span class="code-comment"># 1. Repoyu klonla</span>
+git clone https://github.com/SemihEsim/Turk-Isaret-Dili-Algilama-.git
+cd Turk-Isaret-Dili-Algilama-/TID
+
+<span class="code-comment"># 2. Gerekli paketleri yükle</span>
+pip install opencv-python mediapipe tensorflow scikit-learn
+
+<span class="code-comment"># 3. Random Forest (Harf Tanıma) çalıştır</span>
+cd random_forest
+python realtime.py
+
+<span class="code-comment"># 4. 1D CNN (Kelime Tanıma) çalıştır</span>
+cd "../1d cnn"
+python 1d_cnn.py</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="nav-logo">🤟</span>
+        <span>TID Algılama Projesi</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/SemihEsim/Turk-Isaret-Dili-Algilama-" target="_blank">GitHub</a>
+        <a href="#demo">Demo</a>
+        <a href="#models">Modeller</a>
+      </div>
+      <div class="footer-copy">© 2026 Türk İşaret Dili Algılama Projesi</div>
+    </div>
+  </footer>
+
+  <!-- ═══════ SCRIPTS ═══════ -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/holistic.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1675466124/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
