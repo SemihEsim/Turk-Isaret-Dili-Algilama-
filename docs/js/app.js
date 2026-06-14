@@ -503,6 +503,7 @@ function handleCNN1D(now) {
     // Auto-start recording
     state.cnnRecording = true;
     state.cnnSequence = [];
+    state.cnnHandFrames = 0; // Elin kaç karede göründüğünü say
     state.cnnStartTime = performance.now();
     dom.recordingBar.classList.add("visible");
     dom.predLetter.textContent = "KAYIT";
@@ -512,6 +513,10 @@ function handleCNN1D(now) {
   if (state.cnnRecording) {
     const kp = extractCNN1DKeypoints(results);
     state.cnnSequence.push(kp);
+    
+    if (hasHand) {
+      state.cnnHandFrames++;
+    }
 
     const elapsed = (now - state.cnnStartTime) / 1000;
     const ratio = Math.min(1, elapsed / state.cnnDuration);
@@ -528,6 +533,17 @@ async function finishCNN1DRecording() {
   state.cnnRecording = false;
   state.cnnCooldown = true;
   dom.recordingBar.classList.remove("visible");
+
+  // Python dosyasındaki gibi, el en az 10 karede görünmemişse iptal et
+  if (state.cnnHandFrames <= 10) {
+    dom.predLetter.textContent = "?";
+    dom.predLabel.textContent = "EL ALGILANMADI";
+    dom.confFill.style.width = "0%";
+    dom.confPct.textContent = "%0";
+    state.cnnSequence = [];
+    setTimeout(() => { state.cnnCooldown = false; }, 1000);
+    return;
+  }
 
   dom.predLetter.textContent = "⏳";
   dom.predLabel.textContent = "Analiz ediliyor...";
