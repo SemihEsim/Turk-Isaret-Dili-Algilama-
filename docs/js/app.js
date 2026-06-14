@@ -185,32 +185,71 @@ function initHolistic() {
     minTrackingConfidence: 0.6,
   });
 
-  state.holistic.onResults((results) => {
-    state.results = results;
-    drawLandmarks(results);
-  });
+function drawHandStyle(ctx, landmarks) {
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  
+  // Lokal Python kodu ile aynı bağlantı renkleri
+  const conns = [
+    [0, 1, "rgb(128,128,128)"], [1, 2, "rgb(255,229,180)"], [2, 3, "rgb(255,229,180)"], [3, 4, "rgb(255,229,180)"],
+    [0, 5, "rgb(128,128,128)"], [5, 6, "rgb(128,64,128)"], [6, 7, "rgb(128,64,128)"], [7, 8, "rgb(128,64,128)"],
+    [5, 9, "rgb(128,128,128)"], [9, 10, "rgb(255,204,0)"], [10, 11, "rgb(255,204,0)"], [11, 12, "rgb(255,204,0)"],
+    [9, 13, "rgb(128,128,128)"], [13, 14, "rgb(48,255,48)"], [14, 15, "rgb(48,255,48)"], [15, 16, "rgb(48,255,48)"],
+    [13, 17, "rgb(128,128,128)"], [0, 17, "rgb(128,128,128)"], [17, 18, "rgb(21,101,192)"], [18, 19, "rgb(21,101,192)"], [19, 20, "rgb(21,101,192)"]
+  ];
 
-  console.log("[MediaPipe] Holistic başlatıldı");
+  ctx.lineWidth = 2;
+  for (const [i, j, color] of conns) {
+    const p1 = landmarks[i];
+    const p2 = landmarks[j];
+    if (p1 && p2) {
+      ctx.beginPath();
+      ctx.moveTo(p1.x * w, p1.y * h);
+      ctx.lineTo(p2.x * w, p2.y * h);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+  }
+
+  // Lokal Python kodu ile aynı nokta renkleri
+  const colors = [
+    "rgb(255,0,0)",
+    "rgb(255,229,180)", "rgb(255,229,180)", "rgb(255,229,180)", "rgb(255,229,180)",
+    "rgb(128,64,128)", "rgb(128,64,128)", "rgb(128,64,128)", "rgb(128,64,128)",
+    "rgb(255,204,0)", "rgb(255,204,0)", "rgb(255,204,0)", "rgb(255,204,0)",
+    "rgb(48,255,48)", "rgb(48,255,48)", "rgb(48,255,48)", "rgb(48,255,48)",
+    "rgb(21,101,192)", "rgb(21,101,192)", "rgb(21,101,192)", "rgb(21,101,192)"
+  ];
+  
+  for (let i = 0; i < landmarks.length; i++) {
+    const p = landmarks[i];
+    if (p) {
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
 }
 
 function drawLandmarks(results) {
   const ctx = dom.canvas.getContext("2d");
   ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
 
-  const hasDrawing = typeof drawConnectors === "function" && typeof drawLandmarks === "function";
+  // Eller (Yerel Python renkleriyle çizim)
+  if (results.leftHandLandmarks) {
+    drawHandStyle(ctx, results.leftHandLandmarks);
+  }
+  if (results.rightHandLandmarks) {
+    drawHandStyle(ctx, results.rightHandLandmarks);
+  }
 
-  // Hands (Daha belirgin renkler ve kalın çizgiler)
-  if (results.leftHandLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.leftHandLandmarks, HAND_CONNECTIONS, { color: "#00FF00", lineWidth: 4 }); // Parlak Yeşil
-    window.drawLandmarks(ctx, results.leftHandLandmarks, { color: "#FF0000", lineWidth: 2, radius: 4 }); // Kırmızı Noktalar
-  }
-  if (results.rightHandLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.rightHandLandmarks, HAND_CONNECTIONS, { color: "#00FFFF", lineWidth: 4 }); // Parlak Camgöbeği (Cyan)
-    window.drawLandmarks(ctx, results.rightHandLandmarks, { color: "#FF00FF", lineWidth: 2, radius: 4 }); // Magenta Noktalar
-  }
-  // Pose (Daha belirgin vücut çizgileri)
-  if (results.poseLandmarks && hasDrawing) {
-    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "rgba(255, 255, 255, 0.5)", lineWidth: 2 });
+  // Pose (Daha belirgin vücut çizgileri, eğer typeof drawConnectors varsa)
+  if (results.poseLandmarks && typeof drawConnectors === "function" && typeof POSE_CONNECTIONS !== "undefined") {
+    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: "rgba(255, 255, 255, 0.3)", lineWidth: 2 });
   }
 }
 
