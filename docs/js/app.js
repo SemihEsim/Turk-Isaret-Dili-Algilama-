@@ -29,6 +29,8 @@ const state = {
   cnnStartTime: 0,
   cnnDuration: 3.0,
   cnnCooldown: false,
+  cnnSentence: [],
+  cnnLastHandTime: 0,
   // History
   history: [],
   // Holistic results
@@ -64,7 +66,14 @@ const dom = {
   btnScreen: $("#btnScreen"),
   btnSound: $("#btnSound"),
   soundIcon: $("#soundIcon"),
+  sentenceBox: document.createElement("div"), // Dinamik cümle kutusu
 };
+
+// Cümle kutusunu UI'a ekle (Sadece CNN modunda görünür olacak)
+dom.sentenceBox.className = "cnn-sentence-box";
+dom.sentenceBox.style.display = "none";
+dom.sentenceBox.innerHTML = `<strong>Kurulan Cümle:</strong> <span id="cnnSentenceText"></span>`;
+document.querySelector(".demo-result-card").insertBefore(dom.sentenceBox, document.querySelector(".history-box"));
 
 
 // ═══════ API ═══════
@@ -284,8 +293,12 @@ function stopCamera() {
   window.removeEventListener("resize", resizeCanvas);
   state.cnnRecording = false;
   state.cnnSequence = [];
+  state.cnnSentence = [];
   state.rfBuffer = [];
   dom.recordingBar.classList.remove("visible");
+  if (document.getElementById("cnnSentenceText")) {
+    document.getElementById("cnnSentenceText").textContent = "";
+  }
 }
 
 function resizeCanvas() {
@@ -359,10 +372,32 @@ async function handleRF(now) {
 }
 
 
-// ═══════ CNN1D HANDLER ═══════
+// ═══════ CNN1D HANDLER (Cümle Kurma Mantığı) ═══════
 function handleCNN1D(now) {
   const results = state.results;
   const hasHand = results.leftHandLandmarks || results.rightHandLandmarks;
+
+  // Cümle Bitirme Kontrolü (El 3 saniye boyunca yoksa)
+  if (hasHand) {
+    state.cnnLastHandTime = now;
+  } else if (state.cnnLastHandTime > 0 && now - state.cnnLastHandTime > 3000) {
+    if (state.cnnSentence.length > 0) {
+      const finalSentence = state.cnnSentence.join(" ");
+      speak(finalSentence); // Sadece cümle bitince oku
+      
+      // Geçmişe cümleyi ekle
+      state.history.push("💬 " + finalSentence);
+      if (state.history.length > 40) state.history.shift();
+      renderHistory();
+      
+      state.cnnSentence = [];
+      document.getElementById("cnnSentenceText").textContent = "";
+      
+      dom.predLetter.textContent = "✓";
+      dom.predLabel.textContent = "Cümle Tamamlandı";
+    }
+    state.cnnLastHandTime = 0;
+  }
 
   if (!state.cnnRecording && hasHand && !state.cnnCooldown) {
     // Auto-start recording
@@ -370,6 +405,8 @@ function handleCNN1D(now) {
     state.cnnSequence = [];
     state.cnnStartTime = performance.now();
     dom.recordingBar.classList.add("visible");
+    dom.predLetter.textContent = "KAYIT";
+    dom.predLabel.textContent = "Hareket bekleniyor...";
   }
 
   if (state.cnnRecording) {
@@ -396,17 +433,22 @@ async function finishCNN1DRecording() {
   dom.predLabel.textContent = "Analiz ediliyor...";
 
   const pred = await predictCNN1D(state.cnnSequence);
-  if (pred) showPrediction(pred, true); // CNN is always "stable" since it's one-shot
+  if (pred) {
+    showCNNPrediction(pred);
+  }
 
   state.cnnSequence = [];
 
-  // 1.5sn bekleme
-  setTimeout(() => { state.cnnCooldown = false; }, 1500);
+  // Lokaldeki gibi 1 saniye bekleme süresi
+  setTimeout(() => { state.cnnCooldown = false; }, 1000);
 }
 
 
 // ═══════ UI & AUDIO UPDATES ═══════
 function showPrediction(pred, isStable) {
+  // Sadece RF için kullanılır
+  if (state.selectedModel !== "rf") return;
+
   const label = pred.label;
   const conf = pred.confidence;
   const pct = Math.round(conf * 100);
@@ -416,7 +458,44 @@ function showPrediction(pred, isStable) {
   dom.confFill.style.width = pct + "%";
   dom.confPct.textContent = "%" + pct;
 
-  // Top 5
+  updateTop5(pred);
+
+  // History & Sound (Sadece stabilse ve değiştiyse)
+  if (isStable && conf > 0.5 && label !== state.prevLabel) {
+    state.prevLabel = label;
+    state.history.push(label);
+    if (state.history.length > 40) state.history.shift();
+    renderHistory();
+    speak(label);
+  }
+}
+
+function showCNNPrediction(pred) {
+  // Sadece CNN için kullanılır
+  const label = pred.label;
+  const conf = pred.confidence;
+  const pct = Math.round(conf * 100);
+
+  if (conf > 0.5) {
+    dom.predLetter.textContent = label.toUpperCase();
+    dom.predLabel.textContent = "Kelime Eklendi";
+    
+    // Aynı kelimenin art arda eklenmesini engelle
+    if (state.cnnSentence.length === 0 || state.cnnSentence[state.cnnSentence.length - 1] !== label) {
+      state.cnnSentence.push(label);
+      document.getElementById("cnnSentenceText").textContent = state.cnnSentence.join(" ").toUpperCase();
+    }
+  } else {
+    dom.predLetter.textContent = "?";
+    dom.predLabel.textContent = "Anlaşılamadı";
+  }
+
+  dom.confFill.style.width = pct + "%";
+  dom.confPct.textContent = "%" + pct;
+  updateTop5(pred);
+}
+
+function updateTop5(pred) {
   if (pred.top5 && pred.top5.length) {
     dom.top5List.innerHTML = pred.top5.map((t, i) => {
       const p = Math.round(t.confidence * 100);
@@ -427,15 +506,6 @@ function showPrediction(pred, isStable) {
         <span class="top5-conf">%${p}</span>
       </div>`;
     }).join("");
-  }
-
-  // History & Sound (Only update if stable and changed)
-  if (isStable && conf > 0.5 && label !== state.prevLabel) {
-    state.prevLabel = label;
-    state.history.push(label);
-    if (state.history.length > 40) state.history.shift();
-    renderHistory();
-    speak(label);
   }
 }
 
@@ -466,11 +536,18 @@ function selectModel(model) {
   state.prevLabel = "";
   state.cnnRecording = false;
   state.cnnSequence = [];
+  state.cnnSentence = [];
+  state.cnnLastHandTime = 0;
   state.rfBuffer = [];
   dom.recordingBar.classList.remove("visible");
+  if (document.getElementById("cnnSentenceText")) {
+    document.getElementById("cnnSentenceText").textContent = "";
+  }
 
   dom.tabRF.classList.toggle("active", model === "rf");
   dom.tabCNN.classList.toggle("active", model === "cnn1d");
+  
+  dom.sentenceBox.style.display = model === "cnn1d" ? "block" : "none";
 
   dom.predLetter.textContent = "?";
   dom.predLabel.textContent = "Bekleniyor...";
