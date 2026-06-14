@@ -16,7 +16,7 @@ const state = {
   streaming: false,
   stream: null,
   holistic: null,
-  holisticReady: false,
+  hands: null,
   animationId: null,
   apiConnected: false,
   // RF
@@ -127,7 +127,45 @@ async function predictCNN1D(sequence) {
 }
 
 
-// ═══════ MEDIAPIPE HOLISTIC ═══════
+// ═══════ MEDIAPIPE TRACKERS ═══════
+function initHands() {
+  if (state.hands) return;
+  if (typeof Hands === "undefined") {
+    console.error("[MediaPipe] Hands yüklenemedi!");
+    return;
+  }
+
+  state.hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`,
+  });
+
+  state.hands.setOptions({
+    selfieMode: !state.isScreen,
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.7,
+  });
+
+  state.hands.onResults((handsResults) => {
+    // Hands çıktısını Holistic formatına çevir (kod uyumluluğu için)
+    const results = { leftHandLandmarks: null, rightHandLandmarks: null, poseLandmarks: null };
+    if (handsResults.multiHandLandmarks && handsResults.multiHandedness) {
+      for (let i = 0; i < handsResults.multiHandLandmarks.length; i++) {
+        const lm = handsResults.multiHandLandmarks[i];
+        const label = handsResults.multiHandedness[i].label; // "Left" or "Right"
+        // SelfieMode nedeniyle fiziksel sağ el "Left" olarak etiketlenir
+        if (label === "Left") results.leftHandLandmarks = lm;
+        else results.rightHandLandmarks = lm;
+      }
+    }
+    state.results = results;
+    drawLandmarks(results);
+  });
+
+  console.log("[MediaPipe] Hands başlatıldı");
+}
+
 function initHolistic() {
   if (state.holistic) return;
   if (typeof Holistic === "undefined") {
@@ -136,8 +174,7 @@ function initHolistic() {
   }
 
   state.holistic = new Holistic({
-    locateFile: (file) =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/${file}`,
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic@0.5.1675471629/${file}`,
   });
 
   state.holistic.setOptions({
@@ -150,7 +187,6 @@ function initHolistic() {
 
   state.holistic.onResults((results) => {
     state.results = results;
-    state.holisticReady = true;
     drawLandmarks(results);
   });
 
@@ -270,11 +306,14 @@ async function setupStream() {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
   
-  if (state.holistic) {
-    state.holistic.setOptions({ selfieMode: !state.isScreen });
+  if (state.selectedModel === "rf") {
+    if (!state.hands) initHands();
+    else state.hands.setOptions({ selfieMode: !state.isScreen });
   } else {
-    initHolistic();
+    if (!state.holistic) initHolistic();
+    else state.holistic.setOptions({ selfieMode: !state.isScreen });
   }
+  
   frameLoop();
 }
 
@@ -313,10 +352,11 @@ let mpBusy = false;
 function frameLoop() {
   if (!state.streaming) return;
   state.animationId = requestAnimationFrame(() => {
-    // Send to MediaPipe
-    if (state.holistic && !mpBusy && dom.video.readyState >= 2) {
+    // Send to Active MediaPipe Tracker
+    const tracker = state.selectedModel === "rf" ? state.hands : state.holistic;
+    if (tracker && !mpBusy && dom.video.readyState >= 2) {
       mpBusy = true;
-      state.holistic.send({ image: dom.video }).then(() => { mpBusy = false; }).catch(() => { mpBusy = false; });
+      tracker.send({ image: dom.video }).then(() => { mpBusy = false; }).catch(() => { mpBusy = false; });
     }
 
     const now = performance.now();
@@ -566,6 +606,12 @@ function selectModel(model) {
   dom.confFill.style.width = "0%";
   dom.confPct.textContent = "%0";
   dom.top5List.innerHTML = "";
+
+  // Update active tracker if streaming
+  if (state.streaming) {
+    if (model === "rf" && !state.hands) initHands();
+    if (model === "cnn1d" && !state.holistic) initHolistic();
+  }
 }
 
 
